@@ -1,0 +1,115 @@
+---
+title: "LeagueStats"
+author: "Eli Aronson"
+date: "2023-07-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(rvest)
+library(lubridate)
+library(tidyverse)
+library(stringr)
+library(lubridate)
+library(zoo)
+```
+
+```{r}
+# Specify the URL of the website
+urlHitting <- "https://www.frontierleague.com/sports/bsb/2022-23/teams?sort=avg&r=0&pos=h"
+
+# Read the HTML content of the webpage
+webpage <- read_html(urlHitting)
+
+# Extract the table from the webpage
+table_data <- html_table(html_nodes(webpage, "table")[1], fill = TRUE)
+
+# Access the desired table (assuming it's the first table on the page)
+desired_table <- table_data[[1]]
+
+# Add a new column "OPS"
+desired_table$OPS <- with(desired_table, obp + slg)
+
+# Print the extracted table
+print(desired_table)
+
+#PITCHING
+#pitchingUrl <- "https://www.frontierleague.com/sports/bsb/2022-23/teams?sort=era&r=0&pos=p"
+#webpageP <- read_html(pitchingUrl)
+#pitching_data <- html_table(html_nodes(webpageP,"table")[1], fill = TRUE)
+#pitching_table <- pitching_data[[1]]
+#print(pitching_table)
+```
+
+```{r}
+#Pitching CSV
+pitchingTable <- read.csv("~/Downloads/FrontierLeague Pitching.csv")
+head(pitchingTable)
+```
+
+```{r}
+merged_table <- merge(desired_table, pitchingTable, by = "Name")
+
+# Print the merged table
+print(merged_table)
+```
+
+
+```{r}
+#Inserting past championship teams
+library(dplyr)
+new_row2022 <- data_frame(OPS = 0.792, era = 3.50, Name = "2022")
+merged_table <- bind_rows(merged_table, new_row2022)
+new_row2021 <- data_frame(OPS = 0.750, era = 4.01, Name = "2021")
+merged_table <- bind_rows(merged_table, new_row2021)
+new_row2019 <- data_frame(OPS = 0.740, era = 3.65, Name = "2019")
+merged_table <- bind_rows(merged_table, new_row2019)
+new_row2018 <- data_frame(OPS = 0.682, era = 3.68, Name = "2018")
+merged_table <- bind_rows(merged_table, new_row2018)
+new_row2017 <- data_frame(OPS = 0.785, era = 3.58, Name = "2017")
+merged_table <- bind_rows(merged_table, new_row2017)
+new_row2016 <- data_frame(OPS = 0.760, era = 3.97, Name = "2016")
+merged_table <- bind_rows(merged_table, new_row2016)
+new_row2015 <- data_frame(OPS = 0.699, era = 3.68, Name = "2015")
+merged_table <- bind_rows(merged_table, new_row2015)
+print(merged_table)
+```
+
+```{r}
+# Install and load required packages
+#install.packages("ggplot2")
+library(ggplot2)
+library(ggimage)
+library(rsvg)
+
+# Assuming you have the merged_table data frame with columns OPS and ERA
+
+# Create the line graph
+ggplot(merged_table, aes(x = OPS, y = era)) +  geom_image(aes(image = Image), na.rm = TRUE, size = 0.125) +
+  geom_text(aes(label = ifelse(is.na(Image), Name, "")), size = 2.5, color = "blue")  + geom_vline(xintercept = median(merged_table$OPS), linetype = "dashed", color = "black") +
+  geom_hline(yintercept = median(merged_table$era), linetype = "dashed", color = "black") +
+  #geom_point() 
+  xlab("OPS") +
+  ylab("ERA") +
+  ggtitle("OPS vs ERA Frontier League") + annotate("text", x = .93, y = 7, label = "Year Indicates the Statistics of Past Champion", hjust = 1, vjust = 0, color = "blue", size = 3)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
